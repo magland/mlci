@@ -4,6 +4,65 @@ import pandas as pd
 import os
 
 def get_projects():
+    projects0=[
+        dict(ptype='node',name='ephys-viz',github_user='flatironinstitute',conda_channel='flatiron'),
+        dict(ptype='node',name='kbclient',github_user='magland'),
+        dict(ptype='node',name='kbucket',conda=True,github_user='flatironinstitute',npm_name='@magland/kbucket',conda_channel='flatiron'),
+        dict(ptype='node',name='lariclient',github_user='magland'),
+        dict(ptype='node',name='mlclient',github_user='magland'),
+        dict(ptype='node',name='mountainlab',github_name='mountainlab-js',github_user='flatironinstitute',conda_channel='flatiron'),
+        dict(ptype='node',name='epoxy',github_name='mountainlab-js',github_user='flatironinstitute',npm_name='@magland/epoxy'),
+        dict(ptype='python',name='ml_ephys',github_user='magland',conda_channel='flatiron'),
+        dict(ptype='python',name='ml_ms4alg',github_user='magland',conda_channel='flatiron'),
+        dict(ptype='python',name='ml_pyms',github_user=None,conda_channel='flatiron',pypi_name=None),
+        dict(ptype='python',name='ml_ms3',github_user=None,conda_channel='flatiron',pypi_name=None),
+        dict(ptype='python',name='mountainlab_pytools',github_user='magland',conda_channel='flatiron'),
+        dict(ptype='python',name='mlprocessors',github_user='flatironinstitute',conda_channel='flatiron'),
+        dict(ptype='python',name='spikeforestwidgets',github_user='magland',conda_channel='flatiron'),
+        dict(ptype='other',name='mldevel',github_user='magland'),
+        dict(ptype='other',name='mountainsort_examples',github_user='flatironinstitute')
+    ]
+    projects=[]
+    for P0 in projects0:
+        P=dict(
+            name=P0['name']
+        )
+        if P0['github_user']:
+            if 'github_name' not in P0:
+                P0['github_name']=P0['name']
+            P['local']=dict(
+                name=P0['github_name']
+            )
+            if P0['github_name']:
+                P['github']=dict(
+                    name=P0['github_name'],
+                    user=P0['github_user'],
+                )
+        if P0['ptype'] == 'node':
+            if 'npm_name' not in P0:
+                P0['npm_name']=P0['name']
+            if P0['npm_name']:
+                P['npm']=dict(
+                    name=P0['npm_name']
+                )
+        elif P0['ptype'] == 'python':
+            if 'pypi_name' not in P0:
+                P0['pypi_name']=P0['name']
+            if P0['pypi_name']:
+                P['pypi']=dict(
+                    name=P0['pypi_name']
+                )
+        if 'conda_channel' in P0:
+            if 'conda_name' not in P0:
+                P0['conda_name']=P0['name']
+            if P0['conda_name']:
+                P['conda']=dict(
+                    name=P0['conda_name'],
+                    channel=P0['conda_channel']
+                )
+        projects.append(P)
+            
+    '''
     projects=[
         dict(
             name='epoxy',
@@ -41,6 +100,7 @@ def get_projects():
             conda=dict(name=name,channel='flatiron'),
             pypi=dict(name=name)
         ))
+    '''
     return projects
 
 def find_latest_conda_package(package_name,*,channel=None):
@@ -52,6 +112,7 @@ def find_latest_conda_package(package_name,*,channel=None):
     if result.stderr:
         print(result.stderr)
     if not result.stdout:
+        print('Not found on conda: '+cmd)
         return None
     obj=json.loads(result.stdout.decode())
     if package_name in obj:
@@ -67,6 +128,7 @@ def find_latest_pypi_package(package_name):
     if result.stderr:
         print(result.stderr)
     if not result.stdout:
+        print('Not found on pypi: '+cmd)
         return None
     lines=result.stdout.decode().split('\n')
     lines=list(filter(None, lines)) # remove empty lines
@@ -83,6 +145,7 @@ def find_latest_npm_package(package_name):
     if result.stderr:
         print(result.stderr)
     if not result.stdout:
+        print('Not found on npm: '+cmd)
         return None
     obj=json.loads(result.stdout.decode())
     return dict(
@@ -184,9 +247,9 @@ def generate_status_table(*,local=True,remote=False,local_changes=True,git_repo_
 def run_command(cmd,cwd=None):
     result = subprocess.run(cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE,cwd=cwd)
     if result.stdout:
-        print(result.stdout)
+        print(result.stdout.decode())
     if result.stderr:
-        print(result.stderr)
+        print(result.stderr.decode())
 
 def update_git_repos(git_repo_dirname):
     projects=get_projects()
